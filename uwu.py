@@ -611,7 +611,7 @@ class MyClient(commands.Bot):
             # Revert
             prefix = "owo "
 
-        return f"{prefix}{data['cmd_name']} {data.get('cmd_arguments', '')}".strip()
+        return f"{prefix}{data['cmd_name']} {data.get('cmd_arguments') or ''}".strip()
 
     async def put_queue(self, cmd_data, priority=False, quick=False):
         # cnf = self.misc["command_info"]
