@@ -27,6 +27,7 @@
         "slots": {"priority": 5, "basecd": 15, "log_color": "#dabfae"},
         "blackjack": {"priority": 5, "basecd": 15, "log_color": "#dabfae"},
         "pray": {"priority": 6, "basecd": 300, "log_color": "#a5c7e3"},
+        "quest": {"priority": 6, "basecd": 5, "log_color": "#ff005d"},
         "cookie": {"priority": 7, "basecd": 5, "log_color": "#a5c7e3"},
         "daily": {"priority": 7, "basecd": 5, "log_color": "#6a9882"},
         "lottery": {"priority": 8, "basecd": 5, "log_color": "#6a9882"},
@@ -38,6 +39,7 @@
         "army": {"priority": 10, "basecd": 60, "log_color": "#a86b32"},
         "piku": {"priority": 10, "basecd": 60, "log_color": "#a86b32"},
         "pup": {"priority": 10, "basecd": 60, "log_color": "#a86b32"},
+        "action": {"priority": 10, "basecd": 5, "log_color": "#e3c5db"},
         "customcommand": {"priority": 11, "basecd": 1, "log_color": "#c9a4bc"}
     },
     "alias": {
@@ -110,7 +112,10 @@
         "upgrade": {
             "normal": "upg",
             "alias": ["upg", "upgrade"]
+        },
+        "quest": {
+            "normal": "quest",
+            "alias": ["quest", "q"]
         }
     }
-    
 }
