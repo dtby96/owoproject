@@ -22,7 +22,7 @@ Pygments==2.19.2
 requests==2.32.5
 rich==14.3.3
 tzlocal==5.3.1
-urllib3==2.6.3
+urllib3==2.7.0
 Werkzeug==3.1.6
 yarl==1.22.0
 aiosqlite==0.22.1
