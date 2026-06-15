@@ -401,7 +401,12 @@ class Captcha(BaseCog):
                             else None
                         ),
                     )
-                console_handler(self.bot.global_settings_dict.console)
+                no_solver = (
+                    (not image_captcha and not cap_dict["hcaptcha_solver"]["enabled"])
+                    or (image_captcha and not cap_dict["image_solver"]["enabled"])
+                )
+                if no_solver:
+                    console_handler(self.bot.global_settings_dict.console)
 
                 if cap_dict["hcaptcha_solver"]["enabled"] and not image_captcha:
                     if not self.yescaptcha_in_progress:
@@ -414,6 +419,7 @@ class Captcha(BaseCog):
                         if not solved:
                             await self.bot.log("FAILED to solve hcaptcha", "#d70000")
                             self.captcha_handler(message.channel, "Link")
+                            console_handler(self.bot.global_settings_dict.console)
                             print("stopping code.... Reason -> Failed Hcaptcha attempt")
                             if self.webhook_settings.enabled:
                                 await self.bot.send_webhook(
