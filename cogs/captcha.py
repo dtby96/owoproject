@@ -416,7 +416,9 @@ class Captcha(BaseCog):
                             self.bot.local_headers,
                             cap_dict["hcaptcha_solver"]["retries"],
                         )
-                        if not solved:
+                        if not self.bot.command_handler_status["captcha"]:
+                            await self.bot.log("captcha got solved manually, continuing.", "#656b66")
+                        elif not solved:
                             await self.bot.log("FAILED to solve hcaptcha", "#d70000")
                             self.captcha_handler(message.channel, "Link")
                             console_handler(self.bot.global_settings_dict.console)
