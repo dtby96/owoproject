@@ -37,7 +37,11 @@ class Boss(BaseCog):
             asyncio.create_task(self.time_check())
 
     async def wait_till_reset_day(self):
-        self.sleeping = True
+        await self.time_check()
+        self.sleeping = True  # time_check() resets sleeping=False, restore it
+        if self.boss_tickets > 0:
+            self.sleeping = False
+            return
         time_to_sleep = self.bot.calc_time()
         await self.bot.log(f"Sleeping boss battle till {time_to_sleep}", "#143B02")
         await asyncio.sleep(time_to_sleep)
@@ -113,6 +117,7 @@ class Boss(BaseCog):
     async def on_component_message(self, message):
         if self.boss_tickets <= 0 or self.sleeping:
             if not self.sleeping:
+                self.sleeping = True
                 await self.bot.log(
                     "Don't have enough boss tickets to join boss battle..", "#143B02"
                 )
