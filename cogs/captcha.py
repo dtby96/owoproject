@@ -99,6 +99,7 @@ class Captcha(BaseCog):
         self.kill_task = None
         self.yescaptcha_in_progress = False
         self.captcha_site_opened = False
+        self.manually_solved = False
 
     def fetch_settings(self, cmd):
         return getattr(self.bot.settings_dict.commands, cmd)
@@ -317,6 +318,7 @@ class Captcha(BaseCog):
                     "#5fd700",
                 )
                 await asyncio.sleep(time_to_sleep)
+                self.manually_solved = True
                 self.bot.command_handler_status["captcha"] = False
                 self.bot.db.update_captcha_db()
                 await self.handle_solves()
@@ -411,13 +413,15 @@ class Captcha(BaseCog):
                 if cap_dict["hcaptcha_solver"]["enabled"] and not image_captcha:
                     if not self.yescaptcha_in_progress:
                         self.yescaptcha_in_progress = True
+                        self.manually_solved = False
                         await self.bot.log("Attempting to solve hcaptcha", "#656b66")
                         solved = await self.bot.captcha_handler.solve_owo_bot_captcha(
                             self.bot.local_headers,
                             cap_dict["hcaptcha_solver"]["retries"],
                         )
-                        if not self.bot.command_handler_status["captcha"]:
+                        if self.manually_solved:
                             await self.bot.log("captcha got solved manually, continuing.", "#656b66")
+                            self.manually_solved = False
                         elif not solved:
                             await self.bot.log("FAILED to solve hcaptcha", "#d70000")
                             self.captcha_handler(message.channel, "Link")
