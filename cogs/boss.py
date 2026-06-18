@@ -34,7 +34,7 @@ class Boss(BaseCog):
             except ExtensionNotLoaded:
                 pass
         else:
-            asyncio.create_task(self.time_check())
+            asyncio.create_task(self.time_check(startup=True))
 
     async def wait_till_reset_day(self):
         await self.time_check()
@@ -48,7 +48,7 @@ class Boss(BaseCog):
         await self.time_check()
         self.sleeping = False
 
-    async def time_check(self):
+    async def time_check(self, startup=False):
         last_reset_ts, self.boss_tickets = await self.bot.db.fetch_boss_stats()
 
         if self.boss_tickets > 3 or self.boss_tickets < 0:
@@ -65,6 +65,13 @@ class Boss(BaseCog):
 
             # update database
             self.bot.db.update_stats_db("boss", today_midnight_ts)
+
+        elif startup and self.boss_tickets == 0:
+            # Today's reset is already recorded but tickets are 0 on startup.
+            # Reset optimistically — if OwO truly has no tickets it will respond
+            # with "You don't have any boss tickets!" and the count gets set back to 0.
+            self.bot.db.reset_boss_ticket()
+            self.boss_tickets = 3
 
         self.sleeping = False
 
