@@ -413,51 +413,35 @@ class Captcha(BaseCog):
                 if cap_dict["hcaptcha_solver"]["enabled"] and not image_captcha:
                     if not self.yescaptcha_in_progress:
                         self.yescaptcha_in_progress = True
-                        self.manually_solved = False
-                        await self.bot.log("Attempting to solve hcaptcha", "#656b66")
-                        solved = await self.bot.captcha_handler.solve_owo_bot_captcha(
-                            self.bot.local_headers,
-                            cap_dict["hcaptcha_solver"]["retries"],
-                        )
-                        if self.manually_solved:
-                            await self.bot.log("captcha got solved manually, continuing.", "#656b66")
+                        came_from_manual_solve = False
+                        while True:
                             self.manually_solved = False
-                        elif not solved:
-                            await self.bot.log("FAILED to solve hcaptcha", "#d70000")
-                            self.captcha_handler(message.channel, "Link")
-                            console_handler(self.bot.global_settings_dict.console)
-                            print("stopping code.... Reason -> Failed Hcaptcha attempt")
-                            if self.webhook_settings.enabled:
-                                await self.bot.send_webhook(
-                                    "on_captcha_solve_fail",
-                                    webhook_url=self.get_webhook(),
-                                    pingid=(
-                                        self.webhook_settings.pingUserId
-                                        if validate_snowflake(
-                                            self.webhook_settings.pingUserId
-                                        )
-                                        else None
-                                    ),
-                                )
-                            os._exit(0)
-                        else:
-                            balance = self.bot.captcha_handler.balance
-                            solves_left = balance // 30
-
-                            await self.bot.log(
-                                f"solved, {solves_left} solves left (balance: {balance})",
-                                "#d70000",
+                            await self.bot.log("Attempting to solve hcaptcha", "#656b66")
+                            solved = await self.bot.captcha_handler.solve_owo_bot_captcha(
+                                self.bot.local_headers,
+                                cap_dict["hcaptcha_solver"]["retries"],
                             )
-
-                            if solves_left < 1:
-                                self.bot.command_handler_status["captcha"] = True
-                                await self.bot.log(
-                                    f"credits exhausted - balance: {balance}, stopping...",
-                                    "#d70000",
-                                )
+                            if self.manually_solved:
+                                self.manually_solved = False
+                                if self.bot.command_handler_status["captcha"]:
+                                    came_from_manual_solve = True
+                                    await self.bot.log("captcha got solved manually, new captcha detected - retrying.", "#656b66")
+                                    console_handler(self.bot.global_settings_dict.console)
+                                    continue
+                                await self.bot.log("captcha got solved manually, continuing.", "#656b66")
+                                break
+                            elif not solved:
+                                if came_from_manual_solve:
+                                    await self.bot.log("Auto-solve failed for new captcha - please solve manually.", "#d70000")
+                                    self.captcha_handler(message.channel, "Link")
+                                    break
+                                await self.bot.log("FAILED to solve hcaptcha", "#d70000")
+                                self.captcha_handler(message.channel, "Link")
+                                console_handler(self.bot.global_settings_dict.console)
+                                print("stopping code.... Reason -> Failed Hcaptcha attempt")
                                 if self.webhook_settings.enabled:
                                     await self.bot.send_webhook(
-                                        "on_captcha_solve_no_credits",
+                                        "on_captcha_solve_fail",
                                         webhook_url=self.get_webhook(),
                                         pingid=(
                                             self.webhook_settings.pingUserId
@@ -468,6 +452,35 @@ class Captcha(BaseCog):
                                         ),
                                     )
                                 os._exit(0)
+                            else:
+                                balance = self.bot.captcha_handler.balance
+                                solves_left = balance // 30
+
+                                await self.bot.log(
+                                    f"solved, {solves_left} solves left (balance: {balance})",
+                                    "#d70000",
+                                )
+
+                                if solves_left < 1:
+                                    self.bot.command_handler_status["captcha"] = True
+                                    await self.bot.log(
+                                        f"credits exhausted - balance: {balance}, stopping...",
+                                        "#d70000",
+                                    )
+                                    if self.webhook_settings.enabled:
+                                        await self.bot.send_webhook(
+                                            "on_captcha_solve_no_credits",
+                                            webhook_url=self.get_webhook(),
+                                            pingid=(
+                                                self.webhook_settings.pingUserId
+                                                if validate_snowflake(
+                                                    self.webhook_settings.pingUserId
+                                                )
+                                                else None
+                                            ),
+                                        )
+                                    os._exit(0)
+                                break
                         self.yescaptcha_in_progress = False
 
                 elif cap_dict["image_solver"]["enabled"] and image_captcha:
