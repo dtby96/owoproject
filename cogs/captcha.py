@@ -100,6 +100,7 @@ class Captcha(BaseCog):
         self.yescaptcha_in_progress = False
         self.captcha_site_opened = False
         self.manually_solved = False
+        self.captcha_count = 0
 
     def fetch_settings(self, cmd):
         return getattr(self.bot.settings_dict.commands, cmd)
@@ -310,6 +311,7 @@ class Captcha(BaseCog):
             and message.author.id == self.bot.owo_bot_id
         ):
             if "I have verified that you are human! Thank you! :3" in message.content:
+                self.manually_solved = True
                 time_to_sleep = self.bot.random_float(
                     self.bot.settings_dict.cooldowns.captchaRestart
                 )
@@ -318,7 +320,6 @@ class Captcha(BaseCog):
                     "#5fd700",
                 )
                 await asyncio.sleep(time_to_sleep)
-                self.manually_solved = True
                 self.bot.command_handler_status["captcha"] = False
                 self.bot.db.update_captcha_db()
                 await self.handle_solves()
@@ -372,6 +373,7 @@ class Captcha(BaseCog):
                     ):
                         return
                 self.bot.command_handler_status["captcha"] = True
+                self.captcha_count += 1
                 await self.bot.log("Captcha detected!", "#d70000")
                 image_captcha = False
                 if message.attachments:
@@ -414,6 +416,7 @@ class Captcha(BaseCog):
                     if not self.yescaptcha_in_progress:
                         self.yescaptcha_in_progress = True
                         came_from_manual_solve = False
+                        start_captcha_count = self.captcha_count
                         while True:
                             self.manually_solved = False
                             await self.bot.log("Attempting to solve hcaptcha", "#656b66")
@@ -423,7 +426,8 @@ class Captcha(BaseCog):
                             )
                             if self.manually_solved:
                                 self.manually_solved = False
-                                if self.bot.command_handler_status["captcha"]:
+                                if self.captcha_count > start_captcha_count:
+                                    start_captcha_count = self.captcha_count
                                     came_from_manual_solve = True
                                     await self.bot.log("captcha got solved manually, new captcha detected - retrying.", "#656b66")
                                     console_handler(self.bot.global_settings_dict.console)
