@@ -101,6 +101,7 @@ class Captcha(BaseCog):
         self.captcha_site_opened = False
         self.manually_solved = False
         self.captcha_count = 0
+        self.solver_task = None
 
     def fetch_settings(self, cmd):
         return getattr(self.bot.settings_dict.commands, cmd)
@@ -312,6 +313,8 @@ class Captcha(BaseCog):
         ):
             if "I have verified that you are human! Thank you! :3" in message.content:
                 self.manually_solved = True
+                if self.solver_task and not self.solver_task.done():
+                    self.solver_task.cancel()
                 time_to_sleep = self.bot.random_float(
                     self.bot.settings_dict.cooldowns.captchaRestart
                 )
@@ -420,10 +423,17 @@ class Captcha(BaseCog):
                         while True:
                             self.manually_solved = False
                             await self.bot.log("Attempting to solve hcaptcha", "#656b66")
-                            solved = await self.bot.captcha_handler.solve_owo_bot_captcha(
-                                self.bot.local_headers,
-                                cap_dict["hcaptcha_solver"]["retries"],
+                            self.solver_task = asyncio.create_task(
+                                self.bot.captcha_handler.solve_owo_bot_captcha(
+                                    self.bot.local_headers,
+                                    cap_dict["hcaptcha_solver"]["retries"],
+                                )
                             )
+                            try:
+                                solved = await self.solver_task
+                            except asyncio.CancelledError:
+                                solved = None
+                            self.solver_task = None
                             if self.manually_solved:
                                 self.manually_solved = False
                                 if self.captcha_count > start_captcha_count:
